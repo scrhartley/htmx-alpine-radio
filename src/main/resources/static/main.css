@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+[x-cloak] { display: none !important; }
+
+
+.vinyl-animation-in {
+	animation: appear .6s ease-in-out .3s forwards
+}
+.vinyl-animation-in-spinning {
+	animation: appear .6s ease-in-out .3s forwards,spin 5s linear infinite
+}
+
+::view-transition-old(*), ::view-transition-new(*) {
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+}
+::view-transition-old(*) {
+	animation-name: fadeOutAnimation;
+}
+::view-transition-new(*) {
+	animation-name: fadeInAnimation;
+}
+
+
+.fades-in {
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: fadeInAnimation;
+}
+
+@keyframes fadeInAnimation {
+	0% {
+		opacity:0;
+	}
+}
+@keyframes fadeOutAnimation {
+	to {
+		opacity:0;
+	}
+}
+
+@keyframes spin {
+	0% {
+		transform: rotate(0);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}
+@keyframes appear {
+	0% {
+		left: 0;
+		opacity: 0;
+	}
+	1% {
+		opacity: 1;
+	}
+	to {
+		left: 24%;
+		opacity: 1;
+	}
+}

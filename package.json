@@ -1,0 +1,15 @@
+{
+  "name": "htmx-alpine-records",
+
+  "devDependencies": {
+    "tailwindcss": "^3.4.14"
+  },
+
+  "scripts": {
+    "build": "tailwindcss -i src/main/resources/static/main.css -o src/main/resources/static/main.output.css --minify --config tailwind.config.js --no-autoprefixer",
+
+    "// 1.": "echo '    The watch script is intended to be called manually in dev e.g. bun/bun run watch                                  '",
+    "// 2.": "echo '    Note:  Tailwind's incremental watch can't always remove from the output, but it's not normally problematic    '",
+    "watch": "tailwindcss -i src/main/resources/static/main.css -o src/main/resources/static/main.output.css --watch --config tailwind.config.js --no-autoprefixer"
+  }
+}
