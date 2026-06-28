@@ -18,6 +18,7 @@
                                   width="400" height="400" class="card-image rounded-md relative z-10"<#lt>
                                   src="${album.imageUrl}"
                                   alt="${album.name}" <#rt>
+                                  <#if album?counter <= 4 || !isMobile()>fetchpriority="high" </#if><#t>
                                 /><#lt>
                                 <img src="<@spring.url '/vinyl-lp-400.webp'/>" width="400" height="400" alt aria-hidden="true"
                                      class="absolute top-0 opacity-0 vinyl-image" <#rt>

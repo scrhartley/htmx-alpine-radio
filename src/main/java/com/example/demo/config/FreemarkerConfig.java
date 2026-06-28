@@ -20,8 +20,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import freemarker.core.Environment;
 import freemarker.core.MarkupOutputFormat;
 import freemarker.core.OutputFormat;
+import freemarker.ext.jakarta.servlet.FreemarkerServlet;
+import freemarker.ext.jakarta.servlet.HttpRequestHashModel;
 import freemarker.ext.util.WrapperTemplateModel;
 import freemarker.template.SimpleScalar;
+import freemarker.template.TemplateBooleanModel;
 import freemarker.template.TemplateDirectiveBody;
 import freemarker.template.TemplateDirectiveModel;
 import freemarker.template.TemplateException;
@@ -30,6 +33,7 @@ import freemarker.template.TemplateModel;
 import freemarker.template.TemplateModelException;
 import freemarker.template.TemplateScalarModel;
 import freemarker.template.utility.DeepUnwrap;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Configuration
 public class FreemarkerConfig {
@@ -41,6 +45,7 @@ public class FreemarkerConfig {
             variables.put("toJson", new ToJsonMethodModel(mapper));
             variables.put("springUrl", new SpringUrlMethodModel());
             variables.put("local", ExceptionAwareAssign.localAssignment()); // Co-exists with the built-in directive.
+            variables.put("isMobile", new MobileBrowserCheckMethodModel());
         };
     }
 
@@ -169,6 +174,26 @@ public class FreemarkerConfig {
             OutputFormat outputFormat = env.getCurrentDirectiveCallPlace().getTemplate().getOutputFormat();
             return (outputFormat instanceof MarkupOutputFormat<?> mof)
                     ? mof.fromMarkup(s) : new SimpleScalar(s);
+        }
+    }
+
+
+    static class MobileBrowserCheckMethodModel implements TemplateMethodModelEx {
+        @Override
+        public TemplateBooleanModel exec(List arguments) throws TemplateModelException {
+            if (!arguments.isEmpty()) {
+                throw new TemplateModelException("Arguments not allowed");
+            }
+
+            String userAgent = request().getHeader("User-Agent");
+            boolean mobile = userAgent != null && userAgent.contains("Mobile");
+            return mobile ? TemplateBooleanModel.TRUE : TemplateBooleanModel.FALSE;
+        }
+
+        private static HttpServletRequest request() throws TemplateModelException {
+            Environment env = Environment.getCurrentEnvironment();
+            TemplateModel model = env.getDataModelOrSharedVariable(FreemarkerServlet.KEY_REQUEST);
+            return ((HttpRequestHashModel) model).getRequest();
         }
     }
 

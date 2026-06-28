@@ -55,7 +55,7 @@
 <#macro Record>
     <div class="relative shadow-xl mr-32 w-72 md:w-auto">
         <img
-          src="${album.imageUrl}" alt="${album.name}" aria-hidden="true"
+          src="${album.imageUrl}" alt="${album.name}" aria-hidden="true" fetchpriority="high"
           width="400" height="400" class="block rounded-md tag-album-cover relative z-10 bg-white"
           style="view-transition-name: record-${album.id};" />
         <img x-data="{ isPlayingCurrentRecord: () => $store.isPlaying && $store.currentTrack?.albumId === '${album.id}' }"
