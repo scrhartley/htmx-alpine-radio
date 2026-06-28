@@ -35,7 +35,7 @@ import freemarker.template.utility.DeepUnwrap;
 public class FreemarkerConfig {
 
     @Bean
-    FreeMarkerVariablesCustomizer additionalFreeMarkerVariables(ObjectMapper objectMapper) {
+    public FreeMarkerVariablesCustomizer additionalFreeMarkerVariables(ObjectMapper objectMapper) {
         return (Map<String, Object> variables) -> {
             var mapper = objectMapper.copy().disable(INDENT_OUTPUT);
             variables.put("toJson", new ToJsonMethodModel(mapper));
