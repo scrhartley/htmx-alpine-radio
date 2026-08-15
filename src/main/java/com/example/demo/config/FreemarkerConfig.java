@@ -92,7 +92,7 @@ public class FreemarkerConfig {
      */
     static class SpringUrlMethodModel implements TemplateMethodModelEx {
         @Override
-        public Object exec(List args) throws TemplateModelException {
+        public String exec(List args) throws TemplateModelException {
             if (args.size() != 1) {
                 throw new TemplateModelException(
                         "This directive expects exactly 1 argument and found " + args.size() + ".");
@@ -180,7 +180,7 @@ public class FreemarkerConfig {
 
     static class MobileBrowserCheckMethodModel implements TemplateMethodModelEx {
         @Override
-        public TemplateBooleanModel exec(List arguments) throws TemplateModelException {
+        public TemplateModel exec(List arguments) throws TemplateModelException {
             if (!arguments.isEmpty()) {
                 throw new TemplateModelException("Arguments not allowed");
             }
