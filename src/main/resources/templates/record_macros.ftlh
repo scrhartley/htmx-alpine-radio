@@ -5,9 +5,13 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width">
         <link rel="shortcut icon" href="<@spring.url '/icon-48x48.png'/>">
-        <link rel="stylesheet" href="<@spring.url '/main.output.css'/>" />
+        <#-- -->
+        <style>.flex { display: none; }</style><#-- Critical styles to avoid FOUC -->
+        <@asyncStylesheet href=springUrl('/main.output.css') />
+        <#-- -->
         <script defer src="<@spring.url '/webjars/htmx.org/dist/htmx.min.js'/>"></script>
         <script defer src="<@spring.url '/webjars/htmx-ext-head-support/dist/head-support.min.js'/>"></script>
+        <#-- -->
         <#if title?is_macro>
             <#flush><#nested>
             <#flush><@_Title_ title=title />
@@ -96,4 +100,17 @@
             </div>
         </div>
     </footer>
+</#macro>
+
+<#macro asyncStylesheet href>
+    <#--
+        Pattern from: https://github.com/filamentgroup/loadCSS/blob/master/README.md
+        Successor to pattern using rel="preload" in: https://web.dev/articles/defer-non-critical-css
+
+        "no longer support or include a polyfill for a rel=preload markup pattern. This is because we have
+        since determined that ... is simpler and better for performance, while the former preload pattern could
+        sometimes conflict with resource priorities in ways that aren't helpful for loading CSS in a non-blocking way"
+    -->
+    <link rel="stylesheet" href="${href}" media="print" onload="this.media='all'; this.onload=null;"/>
+</#macro>
 </#macro>
