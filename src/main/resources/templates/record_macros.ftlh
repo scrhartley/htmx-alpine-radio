@@ -111,6 +111,12 @@
         since determined that ... is simpler and better for performance, while the former preload pattern could
         sometimes conflict with resource priorities in ways that aren't helpful for loading CSS in a non-blocking way"
     -->
-    <link rel="stylesheet" href="${href}" media="print" onload="this.media='all'; this.onload=null;"/>
+    <link rel="stylesheet" href="${href}" media="print" />
+    <#-- Use a separate script tag, instead of a self-modifying onload attribute,
+         in order to prevent the htmx head-support extension getting confused -->
+    <script><#rt>
+        let link = document.currentScript.previousElementSibling;<#t>
+        link.addEventListener('load', () => { link.media='all'; }, {once: true});<#t>
+    </script><#lt>
 </#macro>
 </#macro>
