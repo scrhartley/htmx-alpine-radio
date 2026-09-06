@@ -60,6 +60,13 @@
 			<artifactId>alpinejs</artifactId>
 			<version>3.13.0</version>
 			<scope>runtime</scope>
+			<!-- We use pre-bundled assets, so we don't need dependencies -->
+			<exclusions>
+				<exclusion>
+					<groupId>*</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 	</dependencies>
 
