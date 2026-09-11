@@ -11,6 +11,13 @@
         <#-- -->
         <script defer src="<@spring.url '/webjars/htmx.org/dist/htmx.min.js'/>"></script>
         <script defer src="<@spring.url '/webjars/htmx-ext-head-support/dist/head-support.min.js'/>"></script>
+        <script type="module">
+            document.addEventListener('htmx:addingHeadElement', evt => {
+                <#-- Workaround the extension messing with the title, since htmx does that itself. -->
+                let el = evt.detail.headElement.firstElementChild;
+                if (el.nodeName === 'TITLE') evt.preventDefault();
+            });
+        </script>
         <#-- -->
         <#if title?is_macro>
             <#flush><#nested>
