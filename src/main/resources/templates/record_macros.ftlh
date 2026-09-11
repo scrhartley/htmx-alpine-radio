@@ -119,4 +119,3 @@
         link.addEventListener('load', () => { link.media='all'; }, {once: true});<#t>
     </script><#lt>
 </#macro>
-</#macro>
