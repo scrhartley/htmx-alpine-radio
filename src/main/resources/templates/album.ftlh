@@ -2,8 +2,8 @@
 <html lang="en">
     <#include "record_macros.ftlh">
 
-    <#macro lazyTitle>${album.name} by ${album.artist}</#macro>
-    <@Head title=lazyTitle>
+    <#macro LazyTitle>${album.name} by ${album.artist}</#macro>
+    <@Head title=LazyTitle>
         <script defer src="<@spring.url '/webjars/alpinejs/dist/cdn.min.js'/>"></script>
         <script>
             <#-- General Alpine + htmx fix that prevents the back button causing additional empty rows. -->

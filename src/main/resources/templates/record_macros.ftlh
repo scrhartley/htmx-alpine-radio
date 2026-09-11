@@ -7,7 +7,7 @@
         <link rel="shortcut icon" href="<@spring.url '/icon-48x48.png'/>">
         <#-- -->
         <style>.flex { display: none; }</style><#-- Critical styles to avoid FOUC -->
-        <@asyncStylesheet href=springUrl('/main.output.css') />
+        <@AsyncStylesheet href=springUrl('/main.output.css') />
         <#-- -->
         <script defer src="<@spring.url '/webjars/htmx.org/dist/htmx.min.js'/>"></script>
         <script defer src="<@spring.url '/webjars/htmx-ext-head-support/dist/head-support.min.js'/>"></script>
@@ -102,7 +102,7 @@
     </footer>
 </#macro>
 
-<#macro asyncStylesheet href>
+<#macro AsyncStylesheet href>
     <#--
         Pattern from: https://github.com/filamentgroup/loadCSS/blob/master/README.md
         Successor to pattern using rel="preload" in: https://web.dev/articles/defer-non-critical-css
