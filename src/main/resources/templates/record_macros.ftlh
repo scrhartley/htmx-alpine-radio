@@ -123,6 +123,7 @@
          in order to prevent the htmx head-support extension getting confused -->
     <script><#rt>
         let link = document.currentScript.previousElementSibling;<#t>
-        link.addEventListener('load', () => { link.media='all'; }, {once: true});<#t>
+        link.addEventListener('load', () => link.media='all', {once: true});<#t>
     </script><#lt>
+    <noscript><link rel="stylesheet" href="${href}" /></noscript>
 </#macro>
