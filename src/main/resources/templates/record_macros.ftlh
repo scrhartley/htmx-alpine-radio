@@ -2,23 +2,29 @@
 
 <#macro Head title="">
     <head hx-head="append">
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width">
-        <link rel="shortcut icon" href="<@spring.url '/icon-48x48.png'/>">
-        <#-- -->
-        <style>.flex { display: none; }</style><#-- Critical styles to avoid FOUC -->
-        <@AsyncStylesheet href=springUrl('/main.output.css') />
-        <#-- -->
-        <script defer src="<@spring.url '/webjars/htmx.org/dist/htmx.min.js'/>"></script>
-        <script defer src="<@spring.url '/webjars/htmx-ext-head-support/dist/head-support.min.js'/>"></script>
-        <script type="module">
-            document.addEventListener('htmx:addingHeadElement', evt => {
-                <#-- Workaround the extension messing with the title, since htmx does that itself. -->
-                let el = evt.detail.headElement.firstElementChild;
-                if (el.nodeName === 'TITLE') evt.preventDefault();
-            });
-        </script>
-        <#-- -->
+        <#--
+            If it's an htmx request, then they already have all these tags,
+            and we don't want to confuse the htmx head-support extension with them
+            e.g. for tags which we modify on load
+        -->
+        <#if !isHtmxRequest()>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width">
+            <link rel="shortcut icon" href="<@spring.url '/icon-48x48.png'/>">
+            <#-- -->
+            <style>.flex { display: none; }</style><#-- Critical styles to avoid FOUC -->
+            <@AsyncStylesheet href=springUrl('/main.output.css') />
+            <#-- -->
+            <script defer src="<@spring.url '/webjars/htmx.org/dist/htmx.min.js'/>"></script>
+            <script defer src="<@spring.url '/webjars/htmx-ext-head-support/dist/head-support.min.js'/>"></script>
+            <script type="module">
+                document.addEventListener('htmx:addingHeadElement', evt => {
+                    <#-- Workaround the extension messing with the title, since htmx does that itself. -->
+                    let el = evt.detail.headElement.firstElementChild;
+                    if (el.nodeName === 'TITLE') evt.preventDefault();
+                });
+            </script>
+        </#if>
         <#if title?is_macro>
             <#flush><#nested>
             <#flush><@_Title_ title=title />
@@ -120,7 +126,7 @@
     -->
     <link rel="stylesheet" href="${href}" media="print" />
     <#-- Use a separate script tag, instead of a self-modifying onload attribute,
-         in order to prevent the htmx head-support extension getting confused -->
+         in order to reduce the amount the htmx head-support extension can get confused -->
     <script><#rt>
         let link = document.currentScript.previousElementSibling;<#t>
         link.addEventListener('load', () => link.media='all', {once: true});<#t>

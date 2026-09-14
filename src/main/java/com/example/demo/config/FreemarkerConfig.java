@@ -46,6 +46,7 @@ public class FreemarkerConfig {
             variables.put("springUrl", new SpringUrlMethodModel());
             variables.put("local", ExceptionAwareAssign.localAssignment()); // Co-exists with the built-in directive.
             variables.put("isMobile", new MobileBrowserCheckMethodModel());
+            variables.put("isHtmxRequest", new HtmxRequestCheckMethodModel());
         };
     }
 
@@ -188,6 +189,26 @@ public class FreemarkerConfig {
             String userAgent = request().getHeader("User-Agent");
             boolean mobile = userAgent != null && userAgent.contains("Mobile");
             return mobile ? TemplateBooleanModel.TRUE : TemplateBooleanModel.FALSE;
+        }
+
+        private static HttpServletRequest request() throws TemplateModelException {
+            Environment env = Environment.getCurrentEnvironment();
+            TemplateModel model = env.getDataModelOrSharedVariable(FreemarkerServlet.KEY_REQUEST);
+            return ((HttpRequestHashModel) model).getRequest();
+        }
+    }
+
+
+    static class HtmxRequestCheckMethodModel implements TemplateMethodModelEx {
+        @Override
+        public TemplateModel exec(List arguments) throws TemplateModelException {
+            if (!arguments.isEmpty()) {
+                throw new TemplateModelException("Arguments not allowed");
+            }
+
+            String htmxRequest = request().getHeader("HX-Request");
+            boolean htmx = "true".equals(htmxRequest);
+            return htmx ? TemplateBooleanModel.TRUE : TemplateBooleanModel.FALSE;
         }
 
         private static HttpServletRequest request() throws TemplateModelException {
