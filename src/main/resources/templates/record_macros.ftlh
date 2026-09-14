@@ -17,7 +17,7 @@
             <#-- -->
             <script defer src="<@spring.url '/webjars/htmx.org/dist/htmx.min.js'/>"></script>
             <script defer src="<@spring.url '/webjars/htmx-ext-head-support/dist/head-support.min.js'/>"></script>
-            <script type="module">
+            <script type="module"><#-- Using module defers execution -->
                 document.addEventListener('htmx:addingHeadElement', evt => {
                     <#-- Workaround the extension messing with the title, since htmx does that itself. -->
                     let el = evt.detail.headElement.firstElementChild;
@@ -26,8 +26,8 @@
             </script>
         </#if>
         <#if title?is_macro>
-            <#flush><#nested>
-            <#flush><@_Title_ title=title />
+            <#flush><#nested><#-- Might not block HTML stream -->
+            <#flush><@_Title_ title=title /><#-- Will probably block HTML stream -->
         <#else>
             <@_Title_ title=title />
             <#flush><#nested>
