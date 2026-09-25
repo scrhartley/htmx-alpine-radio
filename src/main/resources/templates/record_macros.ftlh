@@ -18,6 +18,14 @@
             <script defer src="<@spring.url '/webjars/htmx.org/dist/htmx.min.js'/>"></script>
             <script defer src="<@spring.url '/webjars/htmx-ext-head-support/dist/head-support.min.js'/>"></script>
             <script type="module"><#-- Using module defers execution -->
+                let errorHandler = htmx.config.responseHandling.find(handler => handler.code === '[45]..');
+                Object.assign(errorHandler, { swap: true });
+                document.addEventListener('htmx:beforeHistoryUpdate', evt => {
+                    if (evt.detail.xhr.status >= 400) {
+                        window.location.assign(evt.detail.history.path);
+                    }
+                });
+
                 document.addEventListener('htmx:addingHeadElement', evt => {
                     <#-- Workaround the extension messing with the title, since htmx does that itself. -->
                     let el = evt.detail.headElement.firstElementChild;
