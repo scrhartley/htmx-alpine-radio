@@ -92,7 +92,7 @@ public class AsyncModelConfig {
     }
 
 
-    private static class ExecutorAsyncModel extends WrappingModel implements AsyncModel {
+    private static class ExecutorAsyncModel extends WrappingModel<AsyncModel> implements AsyncModel {
         private final ExecutorService executorService;
         ExecutorAsyncModel(Model model, ExecutorService executorService) {
             super(model);
@@ -100,37 +100,47 @@ public class AsyncModelConfig {
         }
 
         @Override
-        public Model addAttribute(String attributeName, Callable<?> callable) {
+        public AsyncModel addAttribute(String attributeName, Callable<?> callable) {
             Future<?> future = executorService.submit(callable);
             return super.addAttribute(attributeName, future);
         }
+
+        @Override
+        protected AsyncModel getThis() {
+            return this;
+        }
     }
 
-    private static class WrappingModel implements Model {
+    private static abstract class WrappingModel<W extends Model> implements Model {
         private final Model source;
         WrappingModel(Model model) {
             this.source = model;
         }
 
         @Override
-        public Model addAttribute(String name, Object value) {
-            return source.addAttribute(name, value);
+        public W addAttribute(String name, Object value) {
+            source.addAttribute(name, value);
+            return getThis();
         }
         @Override
-        public Model addAttribute(Object value) {
-            return source.addAttribute(value);
+        public W addAttribute(Object value) {
+            source.addAttribute(value);
+            return getThis();
         }
         @Override
-        public Model addAllAttributes(Collection<?> values) {
-            return source.addAllAttributes(values);
+        public W addAllAttributes(Collection<?> values) {
+            source.addAllAttributes(values);
+            return getThis();
         }
         @Override
-        public Model addAllAttributes(Map<String, ?> attributes) {
-            return source.addAllAttributes(attributes);
+        public W addAllAttributes(Map<String, ?> attributes) {
+            source.addAllAttributes(attributes);
+            return getThis();
         }
         @Override
-        public Model mergeAttributes(Map<String, ?> attributes) {
-            return source.mergeAttributes(attributes);
+        public W mergeAttributes(Map<String, ?> attributes) {
+            source.mergeAttributes(attributes);
+            return getThis();
         }
         @Override
         public boolean containsAttribute(String name) {
@@ -144,6 +154,8 @@ public class AsyncModelConfig {
         public Map<String, Object> asMap() {
             return source.asMap();
         }
+
+        protected abstract W getThis();
     }
 
 }
