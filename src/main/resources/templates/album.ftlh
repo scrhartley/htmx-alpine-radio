@@ -1,7 +1,6 @@
+<#include "record_macros.ftlh">
 <!DOCTYPE html>
 <html lang="en">
-    <#include "record_macros.ftlh">
-
     <#macro LazyTitle>${album.name} by ${album.artist}</#macro>
     <@Head title=LazyTitle>
         <script defer src="<@spring.url '/webjars/alpinejs/dist/cdn.min.js'/>"></script>
@@ -38,9 +37,11 @@
                 <div class="mt-3 flex">
                     <button type="button" onclick="setCurrentTrack(0, true)"
                         class="text-pink-700 bg-gray-100 hover:bg-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-100 font-medium rounded-lg text-lg px-10 py-3 text-center inline-flex items-center dark:focus:ring-gray-500 mr-4">
-                        <svg aria-hidden="true" class="w-6 h-6 mr-2 -ml-1 text-pink-700" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"></path></svg>Play</button>
+                        <svg aria-hidden="true" class="w-6 h-6 mr-2 -ml-1 text-pink-700" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"></path<#rt>
+                            ></svg>Play</button><#lt>
                     <button disabled type="button" class="opacity-50 text-pink-600 bg-gray-100 font-medium rounded-lg text-lg px-10 py-3 text-center inline-flex items-center mr-4">
-                        <svg aria-hidden="true" class="w-6 h-6 mr-2 -ml-1 text-pink-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"></path></svg>Shuffle</button>
+                        <svg aria-hidden="true" class="w-6 h-6 mr-2 -ml-1 text-pink-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"></path<#rt>
+                            ></svg>Shuffle</button><#lt>
                 </div>
             </div>
         </div>

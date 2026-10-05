@@ -1,7 +1,6 @@
+<#include "record_macros.ftlh">
 <!DOCTYPE html>
 <html lang="en">
-    <#include "record_macros.ftlh">
-
     <@Head />
     <@Body contentClass="py-8">
         <div class="container mx-auto max-w-screen-lg px-6 lg:px-0 flex items-center flex-wrap pt-4 pb-12">
