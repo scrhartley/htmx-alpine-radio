@@ -46,9 +46,10 @@
 
 <#macro Body preferClientRender=false lazyPlayer=true contentClass="" contentAttrs={}>
     <body hx-ext="head-support" hx-boost="true" hx-target="#main" hx-select="#main"
-          hx-swap="outerHTML transition:true show:window:top"
+          hx-swap="outerHTML transition:true show:window:top" hx-indicator="#global-loading-indicator"
           id="html_error_fallback" hx-select-oob="#html_error_fallback"
           class="bg-white text-gray-600 work-sans leading-normal text-base tracking-normal">
+        <div id="global-loading-indicator"></div>
         <div class="flex flex-col h-screen">
             <@_Header_ />
             <div id="main" hx-history-elt class="flex-1 overflow-auto">
@@ -63,7 +64,8 @@
                 <#-- Lazy load player (be ready for when we reach a page that can trigger showing it). -->
                 <#-- Sets settle to 0 to avoid Alpine issue. -->
                 <div hx-get="/player" hx-trigger="alpine:init from:document"
-                     hx-swap="outerHTML transition:false settle:0" hx-target="this" hx-select="unset"></div>
+                     hx-swap="outerHTML transition:false settle:0"
+                     hx-target="this" hx-select="unset" hx-indicator="this"></div>
             <#else>
                 <#include "player.ftlh">
             </#if>

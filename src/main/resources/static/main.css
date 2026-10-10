@@ -64,3 +64,28 @@
 		opacity: 1;
 	}
 }
+
+
+#global-loading-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, #65a30d, transparent);
+
+    --reveal-delay: 1s;
+    opacity: 0;
+    visibility: hidden; /* Allow interrupting opacity transition */
+    transition: opacity var(--reveal-delay) step-end;
+
+    &.htmx-request {
+        opacity: 1;
+        visibility: visible;
+        animation: indicatorSlide 3s ease-out var(--reveal-delay) infinite;
+    }
+}
+@keyframes indicatorSlide {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX( 100%); }
+}
