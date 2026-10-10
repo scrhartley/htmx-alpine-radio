@@ -1,32 +1,33 @@
 <#import "/spring.ftl" as spring />
-
+<!-- Included macros -->
 <#macro Head title="">
     <head hx-head="append">
         <#--
             If it's an htmx request, then they already have all these tags,
             and we don't want to confuse the htmx head-support extension with them
-            e.g. for tags which we modify on load
+            e.g. for tags which we modify on load, or because of a changing nonce
         -->
         <#if !isHtmxRequest()>
             <meta charset="UTF-8">
+            <meta http-equiv="Content-Security-Policy" content="<#rt>
+                default-src 'self';<#t>
+                script-src 'strict-dynamic' 'nonce-${nonce()}';<#t>
+                style-src 'nonce-${nonce()}'; style-src-elem 'nonce-${nonce()}';<#t><#-- Include both, else browsers get confused -->
+                img-src 'self'<#list imageHosts as host> ${host}</#list>;"><#lt>
             <meta name="viewport" content="width=device-width">
             <link rel="shortcut icon" href="<@spring.url '/icon-48x48.png'/>">
             <#-- -->
-            <style>.flex { display: none; }</style><#-- Critical styles to avoid FOUC -->
+            <style nonce="${nonce()}">.flex { display: none; }</style><#-- Critical styles to avoid FOUC -->
             <@AsyncStylesheet href=springUrl('/main.output.css') />
             <#-- -->
-            <script defer src="<@spring.url '/webjars/htmx.org/dist/htmx.min.js'/>"></script>
-            <script defer src="<@spring.url '/webjars/htmx-ext-head-support/dist/head-support.min.js'/>"></script>
-            <script type="module"><#-- Using module defers execution -->
-                document.addEventListener('htmx:responseError', evt => {
-                    window.location.assign(evt.detail.pathInfo.finalRequestPath);
-                });
-                document.addEventListener('htmx:addingHeadElement', evt => {
-                    <#-- Workaround the extension messing with the title, since htmx does that itself. -->
-                    let el = evt.detail.headElement.firstElementChild;
-                    if (el.nodeName === 'TITLE') evt.preventDefault();
-                });
-            </script>
+            <meta name="htmx-config" content='{"inlineScriptNonce":"${nonce()}", "inlineStyleNonce":"${nonce()}"}'>
+            <@Script src="${springUrl('/webjars/htmx.org/dist/htmx.min.js')}"></@Script>
+            <@Script src="${springUrl('/webjars/htmx-ext-head-support/dist/head-support.min.js')}"></@Script>
+            <@Script type="module"><#-- Use module to defer loading (non-inline are auto-deferred by macro) -->
+                <@_HandleErrorStatusCodesForHtmxResponsesJS_ />
+                <@_FixHtmxHeadSupportJS_ />
+                <@_ProcessViewTransitionAttrsJS_ />
+            </@Script>
         </#if>
         <#if title?is_macro>
             <#flush><#nested><#-- Might not block HTML stream -->
@@ -61,7 +62,7 @@
             <#if lazyPlayer>
                 <#-- Lazy load player (be ready for when we reach a page that can trigger showing it). -->
                 <#-- Sets settle to 0 to avoid Alpine issue. -->
-                <div hx-get="/player" hx-trigger="load[!!window.Alpine], alpine:init from:document"
+                <div hx-get="/player" hx-trigger="alpine:init from:document"
                      hx-swap="outerHTML transition:false settle:0" hx-target="this" hx-select="unset"></div>
             <#else>
                 <#include "player.ftlh">
@@ -127,12 +128,80 @@
         since determined that ... is simpler and better for performance, while the former preload pattern could
         sometimes conflict with resource priorities in ways that aren't helpful for loading CSS in a non-blocking way"
     -->
-    <link rel="stylesheet" href="${href}" media="print" />
-    <#-- Use a separate script tag, instead of a self-modifying onload attribute,
-         in order to reduce the amount the htmx head-support extension can get confused -->
-    <script><#rt>
+    <link rel="stylesheet" href="${href}" media="print" <#rt>
+        <#if !isHtmxRequest()>nonce="${nonce()}" </#if><#t>
+    /><#lt>
+    <#--
+        Use a separate script tag, instead of a self-modifying onload attribute,
+        in order to reduce the amount the htmx head-support extension can get confused,
+        and additionally to avoid having to use script-src-attr as part of our CSP config.
+    -->
+    <@Script multiline=false><#rt>
         let link = document.currentScript.previousElementSibling;<#t>
         link.addEventListener('load', () => link.media='all', {once: true});<#t>
+    </@Script><#lt>
+    <noscript><#rt>
+        <link rel="stylesheet" href="${href}" <#t>
+            <#if !isHtmxRequest()>nonce="${nonce()}" </#if><#t>
+        /><#t>
+    </noscript><#lt>
+</#macro>
+
+<#macro Script src="" multiline=true attrs...>
+    <script<#rt>
+        <#if !isHtmxRequest()> nonce="${nonce()}"</#if><#t>
+        <#if src?has_content> defer src="${src}"</#if><#t>
+        <#if attrs?has_content><#list attrs as name, value> ${name}="${value}"</#list></#if><#t>
+    ><#t>
+        <#if !src?has_content>
+            <#if multiline>${'\n'}</#if><#t>
+            <#nested><#t>
+            <#if multiline>    </#if><#t>
+        </#if>
     </script><#lt>
-    <noscript><link rel="stylesheet" href="${href}" /></noscript>
+</#macro>
+
+<#macro _HandleErrorStatusCodesForHtmxResponsesJS_>
+    document.addEventListener('htmx:responseError', evt => {
+        window.location.assign(evt.detail.pathInfo.finalRequestPath);
+    });
+</#macro>
+
+<#macro _FixHtmxHeadSupportJS_>
+    document.addEventListener('htmx:addingHeadElement', evt => {
+        let el = evt.detail.headElement.firstElementChild;
+        switch (el.nodeName) {
+            <#-- Workaround the extension messing with the title, since htmx does that itself. -->
+            case 'TITLE':<#rt>
+                evt.preventDefault();<#t>
+                break;<#lt>
+            <#--
+                Avoid the extension relying on 'strict-dynamic' being part of the CSP script-src directive.
+                htmx only manages nonces for the body and the extension doesn't handle them for the head.
+                Unfortunately, Alpine still requires 'strict-dynamic', so it's academic.
+            -->
+            case 'SCRIPT':<#rt>
+                el.nonce = htmx.config.inlineScriptNonce;<#t>
+                break;<#lt>
+        }
+    });
+    <#--
+        Prevent nonces confusing the htmx head-support extension which
+        internally uses outerHTML to compare old and new elements.
+        We don't provide them for htmx responses, since they wouldn't match.
+
+        This implementation assumes that this script is deferred to run after the head is complete.
+    -->
+    document.head.querySelectorAll('[nonce]').forEach(el => el.removeAttribute('nonce'));
+</#macro>
+
+<#macro _ProcessViewTransitionAttrsJS_>
+    <#-- To avoid needing the following in the CSP config: style-src-attr 'unsafe-inline'; -->
+    let addStyles = () => document.body.querySelectorAll('[data-view-transition-name]')
+            .forEach(el => el.style.setProperty('view-transition-name', el.dataset.viewTransitionName));
+    let removeStyles = () =>
+            document.body.querySelectorAll('[data-view-transition-name]').forEach(el => el.removeAttribute('style'));
+    document.addEventListener('htmx:load', addStyles);
+    document.addEventListener('htmx:beforeHistorySave', removeStyles);
+    document.addEventListener('htmx:historyItemCreated', addStyles);
 </#macro>

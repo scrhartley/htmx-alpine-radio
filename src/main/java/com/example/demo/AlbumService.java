@@ -11,6 +11,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 
 @Service
 public class AlbumService {
+    public static final String IMAGE_HOST = "r2.theaudiodb.com";
+
     private final RestClient restClient;
 
     public AlbumService() {
@@ -57,7 +59,7 @@ public class AlbumService {
         }
 
         private static String fixImageURL(String url) {
-            return url.replace("www.theaudiodb.com", "r2.theaudiodb.com");
+            return url.replace("www.theaudiodb.com", IMAGE_HOST);
         }
     }
 
