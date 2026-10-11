@@ -12,7 +12,7 @@
                     <div class="flex flex-col">
                         <a href="/album/${album.id}" class="text-black hover:text-pink-500">
                             <div class="shadow-md hover:shadow-lg relative fades-in"
-                                 style="view-transition-name: record-${album.id};">
+                                 data-view-transition-name="record-${album.id}">
                                 <img <#rt>
                                   width="400" height="400" class="card-image rounded-md relative z-10"<#lt>
                                   src="${album.imageUrl}"
@@ -21,7 +21,7 @@
                                 /><#lt>
                                 <img src="<@spring.url '/vinyl-lp-400.webp'/>" width="400" height="400" alt aria-hidden="true"
                                      class="absolute top-0 opacity-0 vinyl-image" <#rt>
-                                     style="view-transition-name: vinyl-${album.id};"><#lt>
+                                     data-view-transition-name="vinyl-${album.id}"><#lt>
                             </div>
                             <p class="pt-4 font-semibold">${album.name}</p>
                             <p class="pt-1 text-gray-700">${album.artist}</p>

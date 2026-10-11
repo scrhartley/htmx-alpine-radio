@@ -1,12 +1,12 @@
-<div x-data="player" x-show="!!$store.currentTrack" x-cloak class="fixed bottom-0 left-0 right-0 bg-gray-100">
+<div x-data="player" x-show="$store.currentTrack.id !== undefined" x-cloak class="fixed bottom-0 left-0 right-0 bg-gray-100">
     <div class="flex-1 bg-gray-200 h-1.5 dark:bg-gray-700">
         <div class="bg-pink-700 h-1.5" :style="{ width: $data.progress + '%' }"></div>
     </div>
     <div class="container mx-auto max-w-screen-lg px-3 py-2 sm:px-6 sm:py-4 flex items-center gap-5">
-        <img :src="$store.currentTrack?.albumImage" width="60" height="60" class="block rounded-md">
+        <img :src="$store.currentTrack.albumImage" width="60" height="60" class="block rounded-md">
         <div class="flex-1 min-w-0">
-            <p x-text="$store.currentTrack?.title" class="text-xl text-black font-medium overflow-hidden text-ellipsis whitespace-nowrap">title</p>
-            <p x-text="$store.currentTrack?.artist" class="text-xl text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap">artist</p>
+            <p x-text="$store.currentTrack.title" class="text-xl text-black font-medium overflow-hidden text-ellipsis whitespace-nowrap">title</p>
+            <p x-text="$store.currentTrack.artist" class="text-xl text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap">artist</p>
         </div>
         <audio x-ref="media" src=""></audio>
         <div class="flex gap-6 items-center text-black">
@@ -27,9 +27,10 @@
         </div>
     </div>
 </div>
+<#include "record_macros.ftlh">
 <#assign PLAYER_MAX_SONGS = 4 />
 <#assign PLAYER_SONGS_SEQ = (1..PLAYER_MAX_SONGS)?map(num -> '/mp3/song${num?c}.mp3')?map(springUrl) />
-<script>
+<@Script>
     (init => window.Alpine ? init() : document.addEventListener('alpine:init', init))(() => {
         <#-- This app doesn't have real songs: it only has a few songs
              that we will play over and over as the user uses the app. -->
@@ -41,7 +42,7 @@
             progress: 0,
 
             init() {
-                this.$watch('$store.currentTrack?.id', (newId, oldId) => newId !== oldId && this.updatePlayingSong());
+                this.$watch('$store.currentTrack.id', (newId, oldId) => newId !== oldId && this.updatePlayingSong());
                 this.$watch('$store.isPlaying', (play) => this.updatePlaying(play));
             },
             updatePlayingSong() {
@@ -81,7 +82,7 @@
             }
         }));
     });
-</script>
+</@Script>
 
 <#macro PlayIcon><@_PlayPauseIcon
     "M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z" /></#macro>
