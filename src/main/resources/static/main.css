@@ -74,14 +74,9 @@
     height: 4px;
     background: linear-gradient(90deg, transparent, #65a30d, transparent);
 
-    --reveal-delay: 1s;
-    opacity: 0;
-    transition: opacity var(--reveal-delay) step-end;
     transform: translateX(-100%);
-
     &.htmx-request {
-        opacity: 1;
-        animation: indicatorSlide 3s ease-out var(--reveal-delay) infinite;
+        animation: indicatorSlide 3s ease-out 1s infinite;
     }
 }
 @keyframes indicatorSlide {
