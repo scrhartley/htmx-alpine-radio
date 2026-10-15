@@ -31,7 +31,7 @@
 <#assign PLAYER_MAX_SONGS = 4 />
 <#assign PLAYER_SONGS_SEQ = (1..PLAYER_MAX_SONGS)?map(num -> '/mp3/song${num?c}.mp3')?map(springUrl) />
 <@Script>
-    (init => window.Alpine ? init() : document.addEventListener('alpine:init', init))(() => {
+    (init => window.Alpine ? init() : document.addEventListener('alpine:init', init, {once: true}))(() => {
         <#-- This app doesn't have real songs: it only has a few songs
              that we will play over and over as the user uses the app. -->
         const PLAYER_SONGS = ${toJson(PLAYER_SONGS_SEQ)};

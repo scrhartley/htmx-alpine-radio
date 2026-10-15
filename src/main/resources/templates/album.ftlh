@@ -8,7 +8,7 @@
     </@Head>
     <@Body preferClientRender=true lazyPlayer=false contentAttrs={ "aria-labelledby": "page-heading" }>
         <@Script>
-            (init => window.Alpine ? init() : document.addEventListener('alpine:init', init))(() => {
+            (init => window.Alpine ? init() : document.addEventListener('alpine:init', init, {once: true}))(() => {
                 Alpine.store('album', ${toJson(album)});
             });
         </@Script>
