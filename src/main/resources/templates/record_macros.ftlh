@@ -1,5 +1,5 @@
 <#import "/spring.ftl" as spring />
-<!-- Included macros -->
+
 <#macro Head title="">
     <head hx-head="append">
         <#--
