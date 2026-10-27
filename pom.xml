@@ -58,7 +58,7 @@
 		<dependency>
 			<groupId>org.webjars.npm</groupId>
 			<artifactId>alpinejs__csp</artifactId>
-			<version>3.17.4</version>
+			<version>3.17.5</version>
 			<scope>runtime</scope>
 			<!-- We use pre-bundled assets, so we don't need dependencies -->
 			<exclusions>
