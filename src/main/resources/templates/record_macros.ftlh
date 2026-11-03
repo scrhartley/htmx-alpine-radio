@@ -4,7 +4,7 @@
     <head hx-head="append">
         <#--
             If it's an htmx request, then they already have all these tags,
-            and we don't want to confuse the htmx head-support extension with them
+            and we don't want to confuse the htmx head extension with them
             e.g. for tags which we modify on load
         -->
         <#if !isHtmxRequest()>
@@ -15,16 +15,12 @@
             <style>.flex { display: none; }</style><#-- Critical styles to avoid FOUC -->
             <@AsyncStylesheet href=springUrl('/main.output.css') />
             <#-- -->
+            <meta name="htmx-config" content='{"metaCharacter":"|"}'>
             <script defer src="<@spring.url '/webjars/htmx.org/dist/htmx.min.js'/>"></script>
-            <script defer src="<@spring.url '/webjars/htmx-ext-head-support/dist/head-support.min.js'/>"></script>
+            <script defer src="<@spring.url '/webjars/htmx.org/dist/ext/hx-head.min.js'/>"></script>
             <script type="module"><#-- Using module defers execution -->
-                document.addEventListener('htmx:responseError', evt => {
-                    window.location.assign(evt.detail.pathInfo.finalRequestPath);
-                });
-                document.addEventListener('htmx:addingHeadElement', evt => {
-                    <#-- Workaround the extension messing with the title, since htmx does that itself. -->
-                    let el = evt.detail.headElement.firstElementChild;
-                    if (el.nodeName === 'TITLE') evt.preventDefault();
+                document.addEventListener('htmx|response|error', evt => {
+                    window.location.assign(evt.detail.ctx.request.action);
                 });
             </script>
         </#if>
@@ -44,9 +40,9 @@
 </#macro>
 
 <#macro Body preferClientRender=false lazyPlayer=true contentClass="" contentAttrs={}>
-    <body hx-ext="head-support" hx-boost="true" hx-target="#main" hx-select="#main"
-          hx-swap="outerHTML transition:true show:window:top" hx-indicator="#global-loading-indicator"
-          id="html_error_fallback" hx-select-oob="#html_error_fallback"
+    <body hx-boost|inherited="target:#main select:#main swap:'outerHTML transition:true show:window:top'"
+          hx-select-oob|inherited="#html_error_fallback:innerHTML strip:false target:body"
+          hx-indicator|inherited="#global-loading-indicator" hx-status|5xx|inherited="swap:none push:false"
           class="bg-white text-gray-600 work-sans leading-normal text-base tracking-normal">
         <div id="global-loading-indicator"></div>
         <div class="flex flex-col h-screen">
@@ -61,10 +57,8 @@
             </div>
             <#if lazyPlayer>
                 <#-- Lazy load player (be ready for when we reach a page that can trigger showing it). -->
-                <#-- Sets settle to 0 to avoid Alpine issue. -->
-                <div hx-get="/player" hx-trigger="load[!!window.Alpine], alpine:init from:document"
-                     hx-swap="outerHTML transition:false settle:0"
-                     hx-target="this" hx-select="unset" hx-indicator="this"></div>
+                <div hx-get="/player" hx-swap="outerHTML" hx-indicator="this"
+                     hx-trigger="load[!!window.Alpine], alpine:init from:document"></div>
             <#else>
                 <#include "player.ftlh">
             </#if>
@@ -131,7 +125,7 @@
     -->
     <link rel="stylesheet" href="${href}" media="print" />
     <#-- Use a separate script tag, instead of a self-modifying onload attribute,
-         in order to reduce the amount the htmx head-support extension can get confused -->
+         in order to reduce the amount the htmx head extension can get confused -->
     <script><#rt>
         let link = document.currentScript.previousElementSibling;<#t>
         link.addEventListener('load', () => link.media='all', {once: true});<#t>

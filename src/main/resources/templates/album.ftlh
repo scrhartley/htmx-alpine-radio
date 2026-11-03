@@ -3,13 +3,9 @@
 <html lang="en">
     <#macro LazyTitle>${album.name} by ${album.artist}</#macro>
     <@Head title=LazyTitle>
+        <script defer src="<@spring.url '/webjars/htmx.org/dist/ext/hx-alpine-compat.min.js'/>"></script>
         <script defer src="<@spring.url '/webjars/alpinejs/dist/cdn.min.js'/>"></script>
         <script>
-            <#-- General Alpine + htmx fix that prevents the back button causing additional empty rows. -->
-            document.addEventListener('htmx:beforeHistorySave', (evt) => {
-                window.Alpine?.destroyTree(evt.detail.historyElt);
-            });
-
             function setCurrentTrack(idx, playing) {
                 let album = Alpine.store('album');
                 Alpine.store('currentTrack', {
