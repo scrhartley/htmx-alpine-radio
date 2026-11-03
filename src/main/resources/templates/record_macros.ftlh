@@ -204,6 +204,7 @@
     let removeStyles = () =>
             document.body.querySelectorAll('[data-view-transition-name]').forEach(el => el.removeAttribute('style'));
     document.addEventListener('htmx:load', addStyles);
+    <#-- Avoid storing inline styles in history cache -->
     document.addEventListener('htmx:beforeHistorySave', removeStyles);
     document.addEventListener('htmx:historyItemCreated', addStyles);
 </#macro>
