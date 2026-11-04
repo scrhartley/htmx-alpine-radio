@@ -4,7 +4,7 @@
     <head hx-head="append">
         <#--
             If it's an htmx request, then they already have all these tags,
-            and we don't want to confuse the htmx head-support extension with them
+            and we don't want to confuse the htmx head extension with them
             e.g. for tags which we modify on load, or because of a changing nonce
         -->
         <#if !isHtmxRequest()>
@@ -20,12 +20,12 @@
             <style nonce="${nonce()}">.flex { display: none; }</style><#-- Critical styles to avoid FOUC -->
             <@AsyncStylesheet href=springUrl('/main.output.css') />
             <#-- -->
-            <meta name="htmx-config" content='{"inlineScriptNonce":"${nonce()}", "inlineStyleNonce":"${nonce()}"}'>
+            <meta name="htmx-config" content='{ "metaCharacter":"|", "inlineScriptNonce":"${nonce()}" }'>
             <@Script src="${springUrl('/webjars/htmx.org/dist/htmx.min.js')}"></@Script>
-            <@Script src="${springUrl('/webjars/htmx-ext-head-support/dist/head-support.min.js')}"></@Script>
+            <@Script src="${springUrl('/webjars/htmx.org/dist/ext/hx-head.min.js')}"></@Script>
             <@Script type="module"><#-- Use module to defer loading (non-inline are auto-deferred by macro) -->
                 <@_HandleErrorStatusCodesForHtmxResponsesJS_ />
-                <@_FixHtmxHeadSupportJS_ />
+                <@_FixHtmxHeadJS_ />
                 <@_ProcessViewTransitionAttrsJS_ />
             </@Script>
         </#if>
@@ -45,9 +45,9 @@
 </#macro>
 
 <#macro Body preferClientRender=false lazyPlayer=true contentClass="" contentAttrs={}>
-    <body hx-ext="head-support" hx-boost="true" hx-target="#main" hx-select="#main"
-          hx-swap="outerHTML transition:true show:window:top" hx-indicator="#global-loading-indicator"
-          id="html_error_fallback" hx-select-oob="#html_error_fallback"
+    <body hx-boost|inherited="target:#main select:#main swap:'outerHTML transition:true show:window:top'"
+          hx-select-oob|inherited="#html_error_fallback:innerHTML strip:false target:body"
+          hx-indicator|inherited="#global-loading-indicator" hx-status|5xx|inherited="swap:none push:false"
           class="bg-white text-gray-600 work-sans leading-normal text-base tracking-normal">
         <div id="global-loading-indicator"></div>
         <div class="flex flex-col h-screen">
@@ -62,10 +62,8 @@
             </div>
             <#if lazyPlayer>
                 <#-- Lazy load player (be ready for when we reach a page that can trigger showing it). -->
-                <#-- Sets settle to 0 to avoid Alpine issue. -->
-                <div hx-get="/player" hx-trigger="alpine:init from:document"
-                     hx-swap="outerHTML transition:false settle:0"
-                     hx-target="this" hx-select="unset" hx-indicator="this"></div>
+                <div hx-get="/player" hx-trigger="alpine:init from:document" <#rt>
+                     hx-swap="outerHTML" hx-indicator="this"></div><#lt>
             <#else>
                 <#include "player.ftlh">
             </#if>
@@ -135,7 +133,7 @@
     /><#lt>
     <#--
         Use a separate script tag, instead of a self-modifying onload attribute,
-        in order to reduce the amount the htmx head-support extension can get confused,
+        in order to reduce the amount the htmx head extension can get confused,
         and additionally to avoid having to use script-src-attr as part of our CSP config.
     -->
     <@Script multiline=false><#rt>
@@ -164,31 +162,23 @@
 </#macro>
 
 <#macro _HandleErrorStatusCodesForHtmxResponsesJS_>
-    document.addEventListener('htmx:responseError', evt => {
-        window.location.assign(evt.detail.pathInfo.finalRequestPath);
+    document.addEventListener('htmx|response|error', evt => {
+        window.location.assign(evt.detail.ctx.request.action);
     });
 </#macro>
 
-<#macro _FixHtmxHeadSupportJS_>
-    document.addEventListener('htmx:addingHeadElement', evt => {
-        let el = evt.detail.headElement.firstElementChild;
-        switch (el.nodeName) {
-            <#-- Workaround the extension messing with the title, since htmx does that itself. -->
-            case 'TITLE':<#rt>
-                evt.preventDefault();<#t>
-                break;<#lt>
-            <#--
-                Avoid the extension relying on 'strict-dynamic' being part of the CSP script-src directive.
-                htmx only manages nonces for the body and the extension doesn't handle them for the head.
-                Unfortunately, Alpine still requires 'strict-dynamic', so it's academic.
-            -->
-            case 'SCRIPT':<#rt>
-                el.nonce = htmx.config.inlineScriptNonce;<#t>
-                break;<#lt>
-        }
+<#macro _FixHtmxHeadJS_>
+    <#--
+        Avoid the extension relying on 'strict-dynamic' being part of the CSP script-src directive.
+        htmx only manages nonces for the body and the extension doesn't handle them for the head.
+        Unfortunately, Alpine still requires 'strict-dynamic', so it's academic.
+    -->
+    document.addEventListener('htmx|head|before|add', evt => {
+        let el = evt.detail.headElement;
+        if (el.nodeName === 'SCRIPT') el.nonce = htmx.config.inlineScriptNonce;
     });
     <#--
-        Prevent nonces confusing the htmx head-support extension which
+        Prevent nonces confusing the htmx head extension which
         internally uses outerHTML to compare old and new elements.
         We don't provide them for htmx responses, since they wouldn't match.
 
@@ -199,12 +189,8 @@
 
 <#macro _ProcessViewTransitionAttrsJS_>
     <#-- To avoid needing the following in the CSP config: style-src-attr 'unsafe-inline'; -->
-    let addStyles = () => document.body.querySelectorAll('[data-view-transition-name]')
-            .forEach(el => el.style.setProperty('view-transition-name', el.dataset.viewTransitionName));
-    let removeStyles = () =>
-            document.body.querySelectorAll('[data-view-transition-name]').forEach(el => el.removeAttribute('style'));
-    document.addEventListener('htmx:load', addStyles);
-    <#-- Avoid storing inline styles in history cache -->
-    document.addEventListener('htmx:beforeHistorySave', removeStyles);
-    document.addEventListener('htmx:historyItemCreated', addStyles);
+    document.addEventListener('htmx|after|process', evt => {
+        document.body.querySelectorAll('[data-view-transition-name]')
+            .forEach(el => el.style.setProperty('view-transition-name', el.dataset.viewTransitionName))
+    });
 </#macro>

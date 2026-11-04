@@ -215,8 +215,10 @@ public class FreemarkerConfig {
                 throw new TemplateModelException("Arguments not allowed");
             }
 
-            String htmxRequest = request().getHeader("HX-Request");
-            boolean htmx = "true".equals(htmxRequest);
+            var request = request();
+            boolean htmx = "true".equals(request.getHeader("HX-Request"))
+                    // Workaround for https://github.com/bigskysoftware/htmx/issues/4139
+                    || request.getHeader("HX-Request-Type") != null;
             return htmx ? TemplateBooleanModel.TRUE : TemplateBooleanModel.FALSE;
         }
 

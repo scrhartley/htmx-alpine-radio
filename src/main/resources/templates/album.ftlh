@@ -4,6 +4,7 @@
     <#macro LazyTitle>${album.name} by ${album.artist}</#macro>
     <@Head title=LazyTitle>
         <@AlpineLogicScript />
+        <@Script src="${springUrl('/webjars/htmx.org/dist/ext/hx-alpine-compat.min.js')}"></@Script>
         <@Script src="${springUrl('/webjars/alpinejs__csp/dist/cdn.min.js')}"></@Script>
     </@Head>
     <@Body preferClientRender=true lazyPlayer=false contentAttrs={ "aria-labelledby": "page-heading" }>
@@ -100,11 +101,6 @@
 <#macro AlpineLogicScript>
     <#-- Use module to defer loading and to avoid polluting window (by restricting scope). -->
     <@Script type="module">
-        <#-- General Alpine + htmx fix that prevents the back button causing additional empty rows. -->
-        document.addEventListener('htmx:beforeHistorySave', (evt) => {
-            window.Alpine?.destroyTree(evt.detail.historyElt);
-        });
-
         function setCurrentTrack(idx, playing) {
             let album = Alpine.store('album');
             let selectedTrack = {
