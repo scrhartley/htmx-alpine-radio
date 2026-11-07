@@ -2,6 +2,13 @@
 
 <#macro Head title="">
     <head hx-head="append">
+        <#-- htmx CSP extension will pick up the changed nonce each time.
+             Includes some htmx attributes so that the head extension only keeps one copy at a time. -->
+        <meta http-equiv="Content-Security-Policy" hx-head="re-eval" hx-preserve="true" content="<#rt>
+            default-src 'self';<#t>
+            script-src 'strict-dynamic' 'nonce-${nonce()}';<#t>
+            style-src 'nonce-${nonce()}'; style-src-elem 'nonce-${nonce()}';<#t><#-- Include both, else browsers get confused -->
+            img-src 'self'<#list imageHosts as host> ${host}</#list>;"><#lt>
         <#--
             If it's an htmx request, then they already have all these tags,
             and we don't want to confuse the htmx head extension with them
@@ -9,21 +16,15 @@
         -->
         <#if !isHtmxRequest()>
             <meta charset="UTF-8">
-            <meta http-equiv="Content-Security-Policy" content="<#rt>
-                default-src 'self';<#t>
-                script-src 'strict-dynamic' 'nonce-${nonce()}';<#t>
-                style-src 'nonce-${nonce()}'; style-src-elem 'nonce-${nonce()}';<#t><#-- Include both, else browsers get confused -->
-                img-src 'self'<#list imageHosts as host> ${host}</#list>;"><#lt>
             <meta name="viewport" content="width=device-width">
             <link rel="shortcut icon" href="<@spring.url '/icon-48x48.png'/>">
             <#-- -->
             <style nonce="${nonce()}">.flex { display: none; }</style><#-- Critical styles to avoid FOUC -->
             <@AsyncStylesheet href=springUrl('/main.output.css') />
             <#-- -->
-            <meta name="htmx-config" content='<#rt>
-                { "metaCharacter":"|", "inlineScriptNonce":"${nonce()}", "extensions":"hx-head,alpine-compat" }<#t>
-            '><#lt>
+            <meta name="htmx-config" content='{ "metaCharacter":"|", "extensions":"hx-head,alpine-compat,hx-csp" }'>
             <@Script src="${springUrl('/webjars/htmx.org/dist/htmx.min.js')}"></@Script>
+            <@Script src="${springUrl('/webjars/htmx.org/dist/ext/hx-csp.min.js')}"></@Script>
             <@Script src="${springUrl('/webjars/htmx.org/dist/ext/hx-head.min.js')}"></@Script>
             <@Script type="module"><#-- Use module to defer loading (non-inline are auto-deferred by macro) -->
                 <@_HandleErrorStatusCodesForHtmxResponsesJS_ />
@@ -48,13 +49,13 @@
 
 <#macro Body preferClientRender=false lazyPlayer=true contentClass="" contentAttrs={}>
     <body hx-boost|inherited="target:#main select:#main swap:'outerHTML transition:true show:window:top'"
-          hx-select-oob|inherited="#html_error_fallback:innerHTML strip:false target:body"
+          hx-select-oob|inherited="#html_error_fallback:innerHTML strip:false target:body" hx-nonce="${nonce()}"
           hx-indicator|inherited="#global-loading-indicator" hx-status|5xx|inherited="swap:none push:false"
           class="bg-white text-gray-600 work-sans leading-normal text-base tracking-normal">
         <div id="global-loading-indicator"></div>
         <div class="flex flex-col h-screen">
             <@_Header_ />
-            <div id="main" hx-history-elt class="flex-1 overflow-auto">
+            <div id="main" hx-history-elt hx-nonce="${nonce()}" class="flex-1 overflow-auto">
                 <section<#rt>
                         <#if contentClass?has_content> class="${contentClass}"</#if><#t>
                         <#list contentAttrs as attrName, attrVal> ${attrName}="${attrVal}"</#list>><#lt>
@@ -65,7 +66,7 @@
             <#if lazyPlayer>
                 <#-- Lazy load player (be ready for when we reach a page that can trigger showing it). -->
                 <div hx-get="/player" hx-trigger="alpine:init from:document" <#rt>
-                     hx-swap="outerHTML" hx-indicator="this"></div><#lt>
+                     hx-swap="outerHTML" hx-indicator="this" hx-nonce="${nonce()}"></div><#lt>
             <#else>
                 <#include "player.ftlh">
             </#if>
