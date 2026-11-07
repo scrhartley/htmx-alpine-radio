@@ -20,7 +20,9 @@
             <style nonce="${nonce()}">.flex { display: none; }</style><#-- Critical styles to avoid FOUC -->
             <@AsyncStylesheet href=springUrl('/main.output.css') />
             <#-- -->
-            <meta name="htmx-config" content='{ "metaCharacter":"|", "inlineScriptNonce":"${nonce()}" }'>
+            <meta name="htmx-config" content='<#rt>
+                { "metaCharacter":"|", "inlineScriptNonce":"${nonce()}", "extensions":"hx-head,alpine-compat" }<#t>
+            '><#lt>
             <@Script src="${springUrl('/webjars/htmx.org/dist/htmx.min.js')}"></@Script>
             <@Script src="${springUrl('/webjars/htmx.org/dist/ext/hx-head.min.js')}"></@Script>
             <@Script type="module"><#-- Use module to defer loading (non-inline are auto-deferred by macro) -->
