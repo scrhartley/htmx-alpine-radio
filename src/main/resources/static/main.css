@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-[x-cloak] { display: none !important; }
-
 
 .vinyl-animation-in {
 	animation: appear .6s ease-in-out .3s forwards

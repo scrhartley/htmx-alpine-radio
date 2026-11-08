@@ -35,11 +35,11 @@
 </#macro>
 
 <#macro _Title_ title>
-    <#if title?is_macro><@local var='title'><@title /></@local></#if>
+    <#if title?is_macro><@Local var='title'><@title /></@Local></#if>
     <title><#if title?has_content>${title} - </#if>htmx Alpine Records</title>
 </#macro>
 
-<#macro Body preferClientRender=false lazyPlayer=true contentClass="" contentAttrs={}>
+<#macro Body lazyPlayer=true contentClass="" contentAttrs={}>
     <body hx-boost|inherited="target:#main select:#main swap:'outerHTML transition:true show:window:top'"
           hx-select-oob|inherited="#html_error_fallback:innerHTML strip:false target:body"
           hx-indicator|inherited="#global-loading-indicator" hx-status|5xx|inherited="swap:none push:false"
@@ -53,14 +53,18 @@
                         <#list contentAttrs as attrName, attrVal> ${attrName}="${attrVal}"</#list>><#lt>
                     <#nested>
                 </section>
-                <@_Footer_ preferClientRender />
+                <@_Footer_ />
             </div>
+
+            <div id="player-state" hidden data-is-playing="false"></div>
+            <div id="track-state" hidden></div>
             <#if lazyPlayer>
                 <#-- Lazy load player (be ready for when we reach a page that can trigger showing it). -->
-                <div hx-get="/player" hx-swap="outerHTML" hx-indicator="this"
-                     hx-trigger="load[!!window.Alpine], alpine:init from:document"></div>
+                <div id="player-placeholder"></div>
             <#else>
+                <#if isHtmxRequest()><hx-partial hx-target="#player-placeholder" hx-swap="outerHTML"></#if>
                 <#include "player.ftlh">
+                <#if isHtmxRequest()></hx-partial></#if>
             </#if>
         </div>
     </body>
@@ -85,12 +89,11 @@
     </nav>
 </#macro>
 
-<#macro _Footer_ clientRender>
+<#macro _Footer_>
     <footer <#rt>
         <#-- When something major on the page is using Alpine, we can get a better CLS score
              by rendering this at the same time (by also using Alpine).
              Seemingly not required in more recent versions of Chrome. -->
-        <#if clientRender>x-data x-cloak </#if><#t>
         class="container mx-auto max-w-screen-lg px-6 lg:px-0 flex items-center flex-wrap pt-4 pb-32"><#lt>
         <div class="container flex px-3 py-8">
             <div class="w-full mx-auto flex flex-wrap">

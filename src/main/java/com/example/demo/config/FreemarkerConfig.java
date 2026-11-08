@@ -14,6 +14,7 @@ import org.springframework.web.servlet.support.RequestContext;
 import org.springframework.web.servlet.view.freemarker.FreeMarkerView;
 
 import com.example.demo.config.freemarker.ExceptionAwareWriter;
+import com.example.demo.config.freemarker.RenderOnceDirective;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -43,10 +44,12 @@ public class FreemarkerConfig {
         return (Map<String, Object> variables) -> {
             var mapper = objectMapper.copy().disable(INDENT_OUTPUT);
             variables.put("toJson", new ToJsonMethodModel(mapper));
+            variables.put("toJsonAttribute", new ToJsonHtmlAttributeMethodModel(mapper));
             variables.put("springUrl", new SpringUrlMethodModel());
-            variables.put("local", ExceptionAwareAssign.localAssignment()); // Co-exists with the built-in directive.
+            variables.put("Local", ExceptionAwareAssign.localAssignment()); // Co-exists with the built-in directive.
             variables.put("isMobile", new MobileBrowserCheckMethodModel());
             variables.put("isHtmxRequest", new HtmxRequestCheckMethodModel());
+            variables.put("RenderOnce", new RenderOnceDirective());
         };
     }
 
@@ -76,6 +79,33 @@ public class FreemarkerConfig {
             } else {
                 return new SimpleScalar(json);
             }
+        }
+    }
+
+    record ToJsonHtmlAttributeMethodModel(ObjectMapper mapper) implements TemplateMethodModelEx {
+        @Override
+        public TemplateModel exec(List args) throws TemplateModelException {
+            if (args.size() != 1) {
+                throw new TemplateModelException(
+                        "This directive expects exactly 1 argument and found " + args.size() + ".");
+            }
+            try {
+                Object object = DeepUnwrap.unwrap((TemplateModel) args.get(0));
+                String json = mapper.writeValueAsString(object);
+                return ToJsonMethodModel.asModel(escape(json));
+            } catch (JsonProcessingException e) {
+                throw new TemplateModelException(e);
+            }
+        }
+
+        // Assume the html attribute is using single quotes.
+        // We don't want to escape double quotes because they're used all the time.
+        private static String escape(String json) {
+            return json
+                    .replace("&", "&amp;")
+                    .replace("'", "&#39;")
+                    .replace("<", "&lt;")
+                    .replace(">", "&gt;");
         }
     }
 
