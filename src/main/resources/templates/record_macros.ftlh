@@ -36,7 +36,7 @@
 
 <#macro _Title_ title>
     <#if title?is_macro><@Local var='title'><@title /></@Local></#if>
-    <title><#if title?has_content>${title} - </#if>htmx Alpine Records</title>
+    <title><#if title?has_content>${title} - </#if>htmx Live Records</title>
 </#macro>
 
 <#macro Body lazyPlayer=true contentClass="" contentAttrs={}>
@@ -90,11 +90,7 @@
 </#macro>
 
 <#macro _Footer_>
-    <footer <#rt>
-        <#-- When something major on the page is using Alpine, we can get a better CLS score
-             by rendering this at the same time (by also using Alpine).
-             Seemingly not required in more recent versions of Chrome. -->
-        class="container mx-auto max-w-screen-lg px-6 lg:px-0 flex items-center flex-wrap pt-4 pb-32"><#lt>
+    <footer class="container mx-auto max-w-screen-lg px-6 lg:px-0 flex items-center flex-wrap pt-4 pb-32">
         <div class="container flex px-3 py-8">
             <div class="w-full mx-auto flex flex-wrap">
                 <div class="flex w-full lg:w-1/2">
@@ -102,7 +98,6 @@
                         <h3 class="font-bold text-gray-900">About</h3>
                         <p class="py-4">
                             This is an <a class="underline decoration-dotted decoration-1 underline-offset-2" href="https://htmx.org" rel="noopener noreferrer">htmx</a>
-                            and <a class="underline decoration-dotted decoration-1 underline-offset-2" href="https://alpinejs.dev" rel="noopener noreferrer">Alpine.js</a>
                             demo with support for the View Transitions API✨
                         </p>
                         <p>
