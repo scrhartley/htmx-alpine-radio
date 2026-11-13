@@ -29,14 +29,15 @@
 </div>
 <#assign PLAYER_MAX_SONGS = 4 />
 <#assign PLAYER_SONGS_SEQ = (1..PLAYER_MAX_SONGS)?map(num -> '/mp3/song${num?c}.mp3')?map(springUrl) />
+
+<#assign MAX_FPS = 30 /> <#-- Save CPU and avoid problems on high refresh displays -->
+<#assign TOLERANCE_MS = 0.1 />
+<#assign MIN_DELTA_MS = 1000 / MAX_FPS - TOLERANCE_MS />
 <script>
     (init => window.Alpine ? init() : document.addEventListener('alpine:init', init, {once: true}))(() => {
         <#-- This app doesn't have real songs: it only has a few songs
              that we will play over and over as the user uses the app. -->
         const PLAYER_SONGS = ${toJson(PLAYER_SONGS_SEQ)};
-        const MAX_FPS = 30; <#-- Save CPU and avoid problems on high refresh displays -->
-        const TOLERANCE_MS = 0.1;
-        const MIN_DELTA_MS = 1000 / MAX_FPS - TOLERANCE_MS;
         Alpine.data('player', () => ({
             progress: 0,
 
@@ -66,7 +67,7 @@
             _whilePlaying(media, then) {
                 const duration = media.duration;
                 const now = document.timeline.currentTime;
-                const runNow = !!duration && (now - then >= MIN_DELTA_MS);
+                const runNow = !!duration && (now - then >= ${MIN_DELTA_MS?c});
                 if (runNow) {
                     const percentage = (media.currentTime * 100) / duration;
                     if (percentage < 99.99) {
