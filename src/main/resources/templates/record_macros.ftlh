@@ -2,27 +2,42 @@
 
 <#macro Head title="">
     <head hx-head="append">
+        <#-- htmx CSP extension will pick up the changed nonce each time. -->
+        <meta http-equiv="Content-Security-Policy" content="<#rt>
+            default-src 'self';<#t>
+            script-src 'self' 'nonce-${nonce()}';<#t>
+            style-src 'nonce-${nonce()}'; style-src-elem 'nonce-${nonce()}';<#t><#-- Include both, else browsers get confused -->
+            img-src 'self'<#list imageHosts as host> ${host}</#list>;<#t>
+            <#--require-trusted-types-for 'script';<#t>--> <#-- hx-head currently doesn't support this -->
+            trusted-types htmx;"><#lt>
         <#--
             If it's an htmx request, then they already have all these tags,
             and we don't want to confuse the htmx head extension with them
-            e.g. for tags which we modify on load
+            e.g. for tags which we modify on load, or because of a changing nonce
         -->
         <#if !isHtmxRequest()>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width">
             <link rel="shortcut icon" href="<@spring.url '/icon-48x48.png'/>">
             <#-- -->
-            <style>.flex { display: none; }</style><#-- Critical styles to avoid FOUC -->
+            <style nonce="${nonce()}">.flex { display: none; }</style><#-- Critical styles to avoid FOUC -->
             <@AsyncStylesheet href=springUrl('/main.output.css') />
             <#-- -->
-            <meta name="htmx-config" content='{"metaCharacter":"|"}'>
-            <script defer src="<@spring.url '/webjars/htmx.org/dist/htmx.min.js'/>"></script>
-            <script defer src="<@spring.url '/webjars/htmx.org/dist/ext/hx-head.min.js'/>"></script>
-            <script type="module"><#-- Using module defers execution -->
+            <meta name="htmx-config" content='{ "metaCharacter":"|", "safeEval":true, "extensions":"hx-head,hx-csp,hx-live,head-csp" }'>
+            <@Script src="${springUrl('/webjars/htmx.org/dist/htmx.js')}" />
+            <@Script src="${springUrl('/webjars/htmx.org/dist/ext/hx-csp.js')}" />
+            <@Script src="${springUrl('/head-csp.js')}" /><#-- hx-head csp compatibility workarounds -->
+            <@Script src="${springUrl('/webjars/htmx.org/dist/ext/hx-head.js')}" />
+            <@Script type="module"><#-- Use module to defer loading (non-inline are auto-deferred by macro) -->
                 document.addEventListener('htmx|response|error', evt => {
                     window.location.assign(evt.detail.ctx.request.action);
                 });
-            </script>
+                <#-- To avoid needing the following in the CSP config: style-src-attr 'unsafe-inline'; -->
+                document.addEventListener('htmx|after|process', evt => {
+                    document.body.querySelectorAll('[data-view-transition-name]')
+                        .forEach(el => el.style.setProperty('view-transition-name', el.dataset.viewTransitionName))
+                });
+            </@Script>
         </#if>
         <#if title?is_macro>
             <#flush><#nested><#-- Might not block HTML stream -->
@@ -41,13 +56,13 @@
 
 <#macro Body lazyPlayer=true contentClass="" contentAttrs={}>
     <body hx-boost|inherited="target:#main select:#main swap:'outerHTML transition:true show:window:top'"
-          hx-select-oob|inherited="#html_error_fallback:innerHTML strip:false target:body"
+          hx-select-oob|inherited="#html_error_fallback:innerHTML strip:false target:body" hx-nonce="${nonce()}"
           hx-indicator|inherited="#global-loading-indicator" hx-status|5xx|inherited="swap:none push:false"
           class="bg-white text-gray-600 work-sans leading-normal text-base tracking-normal">
         <div id="global-loading-indicator"></div>
         <div class="flex flex-col h-screen">
             <@_Header_ />
-            <div id="main" hx-history-elt class="flex-1 overflow-auto">
+            <div id="main" hx-history-elt hx-nonce="${nonce()}" class="flex-1 overflow-auto">
                 <section<#rt>
                         <#if contentClass?has_content> class="${contentClass}"</#if><#t>
                         <#list contentAttrs as attrName, attrVal> ${attrName}="${attrVal}"</#list>><#lt>
@@ -121,12 +136,31 @@
         since determined that ... is simpler and better for performance, while the former preload pattern could
         sometimes conflict with resource priorities in ways that aren't helpful for loading CSS in a non-blocking way"
     -->
-    <link rel="stylesheet" href="${href}" media="print" />
-    <#-- Use a separate script tag, instead of a self-modifying onload attribute,
-         in order to reduce the amount the htmx head extension can get confused -->
-    <script><#rt>
+    <link rel="stylesheet" href="${href}" media="print" nonce="${nonce()}" />
+    <#--
+        Use a separate script tag, instead of a self-modifying onload attribute,
+        in order to reduce the amount the htmx head extension can get confused,
+        and additionally to avoid having to use script-src-attr as part of our CSP config.
+    -->
+    <@Script multiline=false><#rt>
         let link = document.currentScript.previousElementSibling;<#t>
         link.addEventListener('load', () => link.media='all', {once: true});<#t>
+    </@Script><#lt>
+    <noscript><#rt>
+        <link rel="stylesheet" href="${href}" nonce="${nonce()}" /><#t>
+    </noscript><#lt>
+</#macro>
+
+<#macro Script src="" defer=src?has_content multiline=true attrs...>
+    <script nonce="${nonce()}"<#rt>
+        <#if defer> defer</#if><#t>
+        <#if src?has_content> src="${src}"</#if><#t>
+        <#if attrs?has_content><#list attrs as name, value> ${name}="${value}"</#list></#if><#t>
+    ><#t>
+        <#if !src?has_content>
+            <#if multiline>${'\n'}</#if><#t>
+            <#nested><#t>
+            <#if multiline>    </#if><#t>
+        </#if>
     </script><#lt>
-    <noscript><link rel="stylesheet" href="${href}" /></noscript>
 </#macro>

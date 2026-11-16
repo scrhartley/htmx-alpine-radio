@@ -1,9 +1,13 @@
 package com.example.demo.config;
 
 import static com.fasterxml.jackson.databind.SerializationFeature.*;
+import static freemarker.core.CustomAttribute.*;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.security.SecureRandom;
+import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -13,11 +17,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.support.RequestContext;
 import org.springframework.web.servlet.view.freemarker.FreeMarkerView;
 
+import com.example.demo.AlbumService;
 import com.example.demo.config.freemarker.ExceptionAwareWriter;
 import com.example.demo.config.freemarker.RenderOnceDirective;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import freemarker.core.CustomAttribute;
 import freemarker.core.Environment;
 import freemarker.core.MarkupOutputFormat;
 import freemarker.core.OutputFormat;
@@ -25,6 +31,7 @@ import freemarker.ext.jakarta.servlet.FreemarkerServlet;
 import freemarker.ext.jakarta.servlet.HttpRequestHashModel;
 import freemarker.ext.util.WrapperTemplateModel;
 import freemarker.template.SimpleScalar;
+import freemarker.template.SimpleSequence;
 import freemarker.template.TemplateBooleanModel;
 import freemarker.template.TemplateDirectiveBody;
 import freemarker.template.TemplateDirectiveModel;
@@ -50,6 +57,8 @@ public class FreemarkerConfig {
             variables.put("isMobile", new MobileBrowserCheckMethodModel());
             variables.put("isHtmxRequest", new HtmxRequestCheckMethodModel());
             variables.put("RenderOnce", new RenderOnceDirective());
+            variables.put("nonce", new CspNonceMethodModel());
+            variables.put("imageHosts", new SimpleSequence(Arrays.asList(AlbumService.IMAGE_HOST)));
         };
     }
 
@@ -236,8 +245,10 @@ public class FreemarkerConfig {
                 throw new TemplateModelException("Arguments not allowed");
             }
 
-            String htmxRequest = request().getHeader("HX-Request");
-            boolean htmx = "true".equals(htmxRequest);
+            var request = request();
+            boolean htmx = "true".equals(request.getHeader("HX-Request"))
+                    // Workaround for https://github.com/bigskysoftware/htmx/issues/4139
+                    || request.getHeader("HX-Request-Type") != null;
             return htmx ? TemplateBooleanModel.TRUE : TemplateBooleanModel.FALSE;
         }
 
@@ -245,6 +256,32 @@ public class FreemarkerConfig {
             Environment env = Environment.getCurrentEnvironment();
             TemplateModel model = env.getDataModelOrSharedVariable(FreemarkerServlet.KEY_REQUEST);
             return ((HttpRequestHashModel) model).getRequest();
+        }
+    }
+
+
+    static class CspNonceMethodModel implements TemplateMethodModelEx {
+        private static final SecureRandom RANDOM = new SecureRandom();
+        private static final Base64.Encoder ENCODER = Base64.getEncoder();
+        private static final int NUMBER_OF_BITS = 128;
+        private static final int NUMBER_OF_BYTES = NUMBER_OF_BITS / 8;
+
+        private static final CustomAttribute STATE = new CustomAttribute(SCOPE_ENVIRONMENT) {
+            @Override
+            protected TemplateModel create() {
+                byte[] bytes = new byte[NUMBER_OF_BYTES];
+                RANDOM.nextBytes(bytes);
+                String encoded = ENCODER.encodeToString(bytes);
+                return new SimpleScalar(encoded);
+            }
+        };
+
+        @Override
+        public Object exec(List arguments) throws TemplateModelException {
+            if (!arguments.isEmpty()) {
+                throw new TemplateModelException("Arguments not allowed");
+            }
+            return STATE.get();
         }
     }
 

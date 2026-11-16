@@ -6,11 +6,16 @@
         <#-- If we defer this for an htmx request, then by the time hx-live loads,
              it will have missed its opportunity to process the response content.
              So the head extension doesn't get confused, clean up differing attributes. -->
-        <script src="<@spring.url '/webjars/htmx.org/dist/ext/hx-live.min.js'/>"<#rt>
-            <#if !isHtmxRequest()> defer onload="['defer', 'onload'].forEach(name => this.removeAttribute(name))"</#if><#t>
-        ></script><#lt>
+        <@Script defer=!isHtmxRequest() src="${springUrl('/webjars/htmx.org/dist/ext/hx-live.js')}" />
+        <#if !isHtmxRequest()>
+            <@Script multiline=false><#rt>
+                let el = document.currentScript.previousElementSibling;<#t>
+                el.addEventListener('load', () => el.removeAttribute('defer'), {once: true});<#t>
+            </@Script><#lt>
+        </#if>
         <@PageLogicScripts />
     </@Head>
+
     <@Body lazyPlayer=false contentAttrs={ "aria-labelledby": "page-heading" }>
         <div id="album-data" hidden data-value='${toJsonAttribute(album)}'></div>
 
@@ -23,7 +28,7 @@
                 </h1>
                 <div class="mt-2 text-lg">${album.genre} — ${album.yearReleased}</div>
                 <div class="mt-3 flex">
-                    <button type="button" onclick="setCurrentTrack(0, true)"
+                    <button type="button" hx-on|click="setCurrentTrack(0, true)" hx-nonce="${nonce()}"
                         class="text-pink-700 bg-gray-100 hover:bg-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-100 font-medium rounded-lg text-lg px-10 py-3 text-center inline-flex items-center dark:focus:ring-gray-500 mr-4">
                         <svg aria-hidden="true" class="w-6 h-6 mr-2 -ml-1 text-pink-700" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"></path<#rt>
                             ></svg>Play</button><#lt>
@@ -45,12 +50,12 @@
         <img
           src="${album.imageUrl}" alt="${album.name}" aria-hidden="true" fetchpriority="high"
           width="400" height="400" class="block rounded-md tag-album-cover relative z-10 bg-white"
-          style="view-transition-name: record-${album.id};" />
-        <img
+          data-view-transition-name="record-${album.id}" />
+        <img hx-nonce="${nonce()}"
           src="<@spring.url '/vinyl-lp-400.webp'/>" width="400" height="400" alt aria-hidden="true"
           :data-is-playing-current-record="q('#player-state').data.isPlaying && String(q('#track-state').data.albumId) === '${album.id}'"
           :class="data.isPlayingCurrentRecord ? 'vinyl-animation-in-spinning' : 'vinyl-animation-in'"
-          class="absolute top-0 opacity-0 vinyl-image" style="view-transition-name: vinyl-${album.id};"
+          class="absolute top-0 opacity-0 vinyl-image" data-view-transition-name="vinyl-${album.id}"
         />
     </div>
 </#macro>
@@ -58,12 +63,12 @@
 <#macro TrackList>
     <ul class="text-xl" aria-label="Tracklist">
         <#list album.tracks as track>
-            <li :data-is-current="q('#track-state').data.id === '${track.id}'" class="first-of-type:border-t border-b">
-                <button type="button" :aria-current="data.isCurrent"
+            <li hx-nonce="${nonce()}" :data-is-current="q('#track-state').data.id === '${track.id}'" class="first-of-type:border-t border-b">
+                <button type="button" hx-nonce="${nonce()}" :aria-current="data.isCurrent"
                         hx-on|click="setCurrentTrack(${track?index}, data.isCurrent ? !q('#player-state').data.isPlaying : true)"
                         class="hover:bg-gray-50 focus-visible:ring-2 focus:outline-none focus:ring-black cursor-pointer px-6 py-4 flex basis grow w-full items-center">
-                    <span :hidden="data.isCurrent" class="text-gray-500 w-8 mr-2">${track.position}</span>
-                    <span :hidden="!data.isCurrent" class="text-gray-500 w-8 mr-2"><@TrackPlayPauseIcon /></span>
+                    <span hx-nonce="${nonce()}" :hidden="data.isCurrent" class="text-gray-500 w-8 mr-2">${track.position}</span>
+                    <span hx-nonce="${nonce()}" :hidden="!data.isCurrent" class="text-gray-500 w-8 mr-2"><@TrackPlayPauseIcon /></span>
                     <span class="font-medium">${track.title}</span>
                     <span class="text-gray-500 ml-auto">${track.length}</span>
                 </button>
@@ -87,14 +92,14 @@
                         d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zM9 8.25a.75.75 0 00-.75.75v6c0 .414.336.75.75.75h.75a.75.75 0 00.75-.75V9a.75.75 0 00-.75-.75H9zm5.25 0a.75.75 0 00-.75.75v6c0 .414.336.75.75.75H15a.75.75 0 00.75-.75V9a.75.75 0 00-.75-.75h-.75z" <#t>
                     /><#lt>
                 </symbol>
+            </@RenderOnce>
             </defs><#rt>
-        </@RenderOnce>
-        <use :href="q('#player-state').data.isPlaying ? '#play-icon' : '#pause-icon'"></use></svg><#t>
+        <use hx-nonce="${nonce()}" :href="q('#player-state').data.isPlaying ? '#play-icon' : '#pause-icon'"></use></svg><#t>
 </#macro>
 
 
 <#macro PageLogicScripts>
-    <script type="module">
+    <@Script type="module">
         window.setCurrentTrack = function(idx, playing) {
             let album = htmx.live.q('#album-data').data.value;
             let track = {
@@ -123,5 +128,5 @@
                 state.trigger('playing_change', { playing });
             }
         }
-    </script>
+    </@Script>
 </#macro>
